@@ -1,0 +1,17 @@
+This document contains learnings while experimenting with spark in yarn cluster mode.
+
+1) There is currently no need to set spark.driver.extraClasspath and spark.executor.extraClasspath if SparkHome is set.
+2) spark.yarn.archive and spark.yarn.jars will download the zip file or jar uploaded into persistent storage(like hdfs)
+   and then copies it to all the nodes participating as driver and exectors.
+3) The location of working directory is determined by the property "yarn.nodemanager.local-dirs"
+4) The file/jars contained in the property "spark.yarn.jars" | "spark.yarn.zip" would be downloaded to ${"yarn.nodemanager.local-dirs"}/filecache/${num(just some random number i guess)}
+5) Then for each user there is yarn local directory represented by env var "LOCAL_USER_DIRS" and its value is 
+   ${"yarn.nodemanager.local-dirs"}/usercache/${SPARK_USER}
+6) The working directory for the given node would be ${LOCAL_USER_DIRS}/appcache/${application id of the spark app}/${containerId}
+7) The application jar (_app_jar_) and the required spark_conf would be downloaded to the location ${LOCAL_USER_DIRS}/filecache/${app_jar_name} and ${LOCAL_USER_DIRS}/filecache/spark_conf.zip
+8) Finally it creates a symoblic link between ${WORKING_DIR}/_spark_lib_ which is nothing but the value set in point 2) and 
+ a symbolic link between ${WORKING_DIR}/_spark_conf and ${LOCAL_USER_DIRS}/filecache/spark_conf.zip and between ${WORKING_DIR}/application_jar and ${LOCAL_USER_DIRS}/filecache/${app_jar_name}.
+9) Once all the above steps are done it will _spark_conf_ and _spark_lib_ will be prefixed to the value of ${yarn.applcation.classpath}
+ and CLASSPATH would be created out of it.
+
+   
